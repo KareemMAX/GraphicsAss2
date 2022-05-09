@@ -1,3 +1,6 @@
+// Kareem Mohamed Morsy , ID: 20190386, Group: CS-S5, Program: CS
+// Bassant Samer Mahmoud, ID: 20190133, Group: CS-S5, Program: CS
+
 #include <Windows.h>
 #include <math.h>
 struct Point {
