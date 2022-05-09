@@ -11,7 +11,16 @@ struct Point {
         this->x = x; this->y = y;
     }
 };
-
+struct Vector {
+    double v[2];
+    Vector(double x = 0, double y = 0)
+    {
+        v[0] = x; v[1] = y;
+    }
+    double& operator[](int i) {
+        return v[i];
+    }
+};
 void swap(Point& a, Point& b)
 {
     Point tmp = a;
@@ -67,9 +76,27 @@ void CircleBresenham(HDC hdc, Point center, int R)
         DrawPoints(hdc, center, x, y);
     }
 }
-
+void DrawBezierCurve(HDC hdc, Point& p1, Point& p2, Point& p3, Point& p4, COLORREF c)
+{
+    double a0 = p1.x,
+        a1 = 3 * (p2.x - p1.x),
+        a2 = 3 * p1.x - 6 * p2.x + 3 * p3.x,
+        a3 = -p1.x + 3 * p2.x - 3 * p3.x + p4.x;
+    double b0 = p1.y,
+        b1 = 3 * (p2.y - p1.y),
+        b2 = 3 * p1.y- 6 * p2.y + 3 * p3.y,
+        b3 = -p1.y + 3 * p2.y - 3 * p3.y + p4.y;
+    for (double t = 0; t <= 1; t += 0.001)
+    {
+        double t2 = t * t, t3 = t2 * t;
+        double x = a0 + a1 * t + a2 * t2 + a3 * t3;
+        double y = b0 + b1 * t + b2 * t2 + b3 * t3;
+        SetPixel(hdc, Round(x), Round(y), c);
+    }
+}
 void DrawPointCircleClipping(HDC hdc, Point p, Point cCenter, int r) {
     if ((p.x - cCenter.x) * (p.x - cCenter.x) + (p.y - cCenter.y) * (p.y - cCenter.y) > r * r) {
+
         SetPixel(hdc, p.x, p.y, RGB(0, 0, 255));
     }
     else {
@@ -78,10 +105,24 @@ void DrawPointCircleClipping(HDC hdc, Point p, Point cCenter, int r) {
 }
 
 void DrawCurve(HDC hdc, Point b[], Point cCenter, int r) {
-    // TODO
+    double a0 = b[0].x,
+        a1 = 3 * (b[1].x - b[0].x),
+        a2 = 3 * b[0].x - 6 * b[1].x + 3 * b[2].x,
+        a3 = -b[0].x + 3 * b[1].x - 3 * b[2].x + b[3].x;
+    double b0 = b[0].y,
+        b1 = 3 * (b[1].y - b[0].y),
+        b2 = 3 * b[0].y - 6 * b[1].y + 3 * b[2].y,
+        b3 = -b[0].y + 3 * b[1].y - 3 * b[2].y + b[3].y;
     for (int i = 0; i < 4; i++)
     {
-        DrawPointCircleClipping(hdc, b[i], cCenter, r);
+        for (double t = 0; t <= 1; t += 0.001)
+        {
+            double t2 = t * t, t3 = t2 * t;
+             b[i].x = a0 + a1 * t + a2 * t2 + a3 * t3;
+             b[i].y = b0 + b1 * t + b2 * t2 + b3 * t3;
+            DrawPointCircleClipping(hdc, b[i], cCenter, r);
+        }
+        
     }
 }
 
@@ -93,7 +134,6 @@ LRESULT WINAPI MyWndProc(HWND hwnd, UINT mcode, WPARAM wp, LPARAM lp)
 {
     HDC hdc;
     Point mouse = Point(LOWORD(lp), HIWORD(lp));;
-
     switch (mcode)
     {
     case WM_LBUTTONDOWN:
@@ -137,7 +177,7 @@ LRESULT WINAPI MyWndProc(HWND hwnd, UINT mcode, WPARAM wp, LPARAM lp)
         state++;
         if (state == 18)
             state = 0;
-
+        
         ReleaseDC(hwnd, hdc);
         break;
     case WM_CLOSE:
